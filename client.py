@@ -1,7 +1,7 @@
 import socket
 import argparse
 
-HOST = "172.26.42.163" #change to server ip
+HOST = "172.26.0.108" #change to server ip
 PORT = 65083
 
 def main():

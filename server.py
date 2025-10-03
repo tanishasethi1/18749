@@ -8,7 +8,7 @@ import threading
 # in terminal: ipconfig (windows) or ifconfig (mac)
 # paste it into "host"
 
-HOST = "172.26.42.163"
+HOST = "172.26.0.108"
 PORT = 65083
 
 state_lock = threading.Lock()
@@ -31,8 +31,8 @@ def new_client(conn, addr):
                     continue
             
             with state_lock:
-                my_state += 1
                 current_state = my_state
+                my_state += 1
             print(f"Server state before reply: {current_state}")
 
             # echo data back 
