@@ -1,5 +1,6 @@
 import socket
 import threading
+import argparse
 
 # here is the StackOverflow I'm referencing:
 # https://stackoverflow.com/questions/10810249/python-socket-multiple-clients
@@ -47,7 +48,7 @@ def new_client(conn, addr):
                 my_state += 1
             print(f"Server state before reply: {current_state}")
 
-            # ADDITION: show after-state for clarity
+            # ADDITION: showin afterstate 
             print(f"{YELLOW}[{ts()}] Server 1: State changed from {current_state} to {my_state}{RESET}")
 
 
@@ -64,13 +65,18 @@ def new_client(conn, addr):
 
 def main():
     # create TCP socket
+    parser = argparse.ArgumentParser(description="Server")
+    parser.add_argument("-s", "--server", type=int, default=1)
+
+
+    args = parser.parse_args()
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         # bind socket to host and port
         s.bind((HOST, PORT))
         # listen for connections
         s.listen()
 
-        #ADDITION: log that server is ready
+        #ADDITION
         print(f"[{ts()}] Server listening on {HOST}:{PORT}")
 
         # accept connections in a loop
