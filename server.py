@@ -8,7 +8,16 @@ import threading
 # in terminal: ipconfig (windows) or ifconfig (mac)
 # paste it into "host"
 
-HOST = "172.26.0.108"
+from datetime import datetime
+GREEN = "\033[92m"   # heartbeat
+YELLOW = "\033[93m"  # state change
+RED = "\033[91m"     # errors
+RESET = "\033[0m"
+
+def ts():
+    return datetime.now().strftime("%H:%M:%S")
+
+HOST = "127.0.0.1"
 PORT = 65083
 
 state_lock = threading.Lock()
@@ -28,6 +37,9 @@ def new_client(conn, addr):
                 print("Received message:", res)
 
                 if res == "Heartbeat":
+                    # ADDITION: respond to heartbeat so LFD can confirm
+                    conn.sendall("ACK".encode())
+                    print(f"{GREEN}[{ts()}] Server 1: Heartbeat from LFD 1 {addr} acknowledged{RESET}")
                     continue
             
             with state_lock:
@@ -35,8 +47,12 @@ def new_client(conn, addr):
                 my_state += 1
             print(f"Server state before reply: {current_state}")
 
+            # ADDITION: show after-state for clarity
+            print(f"{YELLOW}[{ts()}] Server 1: State changed from {current_state} to {my_state}{RESET}")
+
+
             # echo data back 
-            reply = f"Message received. Server state: {current_state}"
+            reply = f"Message received from S1. Server state: {current_state}"
             reply += "\n"
             conn.sendall(reply.encode())
             conn.sendall(res.encode())
@@ -53,6 +69,9 @@ def main():
         s.bind((HOST, PORT))
         # listen for connections
         s.listen()
+
+        #ADDITION: log that server is ready
+        print(f"[{ts()}] Server listening on {HOST}:{PORT}")
 
         # accept connections in a loop
         while True:
