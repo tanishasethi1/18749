@@ -37,27 +37,34 @@ def handle_lfd(conn, addr):
             lfd_id = lfd[-1]
             conn_status = data.split(":")[1].strip()
             
-            # check if LFD connected
-            if "Connected" in conn_status: 
+        
+            # check if server connected to its LFD
+            if "Server Connected" == conn_status:
+                print(f"GFD: Server connected to LFD")
                 if lfd_id not in membership.keys():
                     member_count += 1
                     membership[lfd_id] = 1
                     print(f"GFD: {len(membership)} members")
-            # check if server connected to its LFD
-            elif "Server Connected" in conn_status:
-                print(f"GFD: Server connected to LFD")
             # check if LFD died/disconnected
-            elif "Disconnected" in conn_status:
+            if "Server Disconnected" == conn_status:
                 if lfd_id in membership.keys():
                     member_count -= 1
                     membership.pop(lfd_id)
                     print(f"GFD: {len(membership)} members")
             # check if LFD heartbeat
-            elif "Heartbeat" in conn_status:
+            if "Heartbeat" == conn_status:
                  # ADDITION: respond to heartbeat so LFD can confirm
                 conn.sendall("ACK".encode())
                 print(f"{GREEN}[{ts()}] GFD: Heartbeat from LFD{lfd_id} {addr} acknowledged{RESET}")
                 print(f"GFD: {len(membership)} members")
+
+            # LFD connection check    
+            if "Connected" == conn_status: 
+                # if lfd_id not in membership.keys():
+                #     member_count += 1
+                #     membership[lfd_id] = 1
+                #     print(f"GFD: {len(membership)} members")
+                print(f"GFD: LFD {lfd_id} connected")
                 
     except Exception as e:
         print(f"Error handling LFD {addr}: {e}")
@@ -70,6 +77,7 @@ def main():
         s.bind((HOST, PORT))
         s.listen()
         print(f"GFD listening on {HOST}:{PORT}")
+        
         # connecting LFDs
         while True:
             conn, addr = s.accept()

@@ -19,12 +19,12 @@ def ts():
     return datetime.now().strftime("%H:%M:%S")
 
 HOST = "127.0.0.1"
-PORT = 65083
+PORT = 65080
 
 state_lock = threading.Lock()
 my_state = 0
 
-def new_client(conn, addr):
+def new_conn(conn, addr):
     global my_state
     res = ""
     try:
@@ -40,7 +40,7 @@ def new_client(conn, addr):
                 if res == "Heartbeat":
                     # ADDITION: respond to heartbeat so LFD can confirm
                     conn.sendall("ACK".encode())
-                    print(f"{GREEN}[{ts()}] Server 1: Heartbeat from LFD 1 {addr} acknowledged{RESET}")
+                    print(f"{GREEN}[{ts()}] Server {id}: Heartbeat from LFD {id} {addr} acknowledged{RESET}")
                     continue
             
             with state_lock:
@@ -49,11 +49,11 @@ def new_client(conn, addr):
             print(f"Server state before reply: {current_state}")
 
             # ADDITION: showin afterstate 
-            print(f"{YELLOW}[{ts()}] Server 1: State changed from {current_state} to {my_state}{RESET}")
+            print(f"{YELLOW}[{ts()}] Server {id}: State changed from {current_state} to {my_state}{RESET}")
 
 
             # echo data back 
-            reply = f"Message received from S1. Server state: {current_state}"
+            reply = f"Message received from S{id}. Server state: {current_state}"
             reply += "\n"
             conn.sendall(reply.encode())
             conn.sendall(res.encode())
@@ -66,23 +66,25 @@ def new_client(conn, addr):
 def main():
     # create TCP socket
     parser = argparse.ArgumentParser(description="Server")
-    parser.add_argument("-s", "--server", type=int, default=1)
-
+    parser.add_argument("-i", "--id", type=int, default=1)
+    # parser.add_argument("-p", "--port", type=int, default=1)
 
     args = parser.parse_args()
+    global id
+    id = args.id
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         # bind socket to host and port
-        s.bind((HOST, PORT))
+        s.bind((HOST, PORT+id))
         # listen for connections
         s.listen()
 
         #ADDITION
-        print(f"[{ts()}] Server listening on {HOST}:{PORT}")
+        print(f"[{ts()}] Server listening on {HOST}:{PORT+id}")
 
         # accept connections in a loop
         while True:
             conn, addr = s.accept()
             print(f"Connected to client")
-            threading.Thread(target=new_client, args=(conn, addr)).start()
+            threading.Thread(target=new_conn, args=(conn, addr)).start()
 
 main()
