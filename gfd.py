@@ -19,6 +19,14 @@ member_count = 0
 membership = {}
 lock = threading.Lock()
 
+def print_membership():
+    # message format:
+    # GFD: x members - S1, S2, ...
+    members = ""
+    for lfd_id in membership.keys():
+        members += f"S{lfd_id}, "
+
+    print(f"GFD: {len(membership)} members - {members[:-2]}")
 
 # makes connection, registers which lfd, adds to membership list
 def handle_lfd(conn, addr):
@@ -44,19 +52,22 @@ def handle_lfd(conn, addr):
                 if lfd_id not in membership.keys():
                     member_count += 1
                     membership[lfd_id] = 1
-                    print(f"GFD: {len(membership)} members")
+                    print_membership()
+                    # print(f"GFD: {len(membership)} members")
             # check if LFD died/disconnected
             if "Server Disconnected" == conn_status:
                 if lfd_id in membership.keys():
                     member_count -= 1
                     membership.pop(lfd_id)
-                    print(f"GFD: {len(membership)} members")
+                    print_membership()
+                    # print(f"GFD: {len(membership)} members")
             # check if LFD heartbeat
             if "Heartbeat" == conn_status:
                  # ADDITION: respond to heartbeat so LFD can confirm
                 conn.sendall("ACK".encode())
                 print(f"{GREEN}[{ts()}] GFD: Heartbeat from LFD{lfd_id} {addr} acknowledged{RESET}")
-                print(f"GFD: {len(membership)} members")
+                print_membership()
+                # print(f"GFD: {len(membership)} members")
 
             # LFD connection check    
             if "Connected" == conn_status: 

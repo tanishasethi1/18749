@@ -24,6 +24,8 @@ PORT = 65080
 state_lock = threading.Lock()
 my_state = 0
 
+clients = []
+
 def new_conn(conn, addr):
     global my_state
     res = ""
@@ -36,28 +38,32 @@ def new_conn(conn, addr):
             else:
                 res = data.decode()
                 print("Received message:", res)
-
+                # LFD response handling
                 if res == "Heartbeat":
                     # ADDITION: respond to heartbeat so LFD can confirm
                     conn.sendall("ACK".encode())
                     print(f"{GREEN}[{ts()}] Server {id}: Heartbeat from LFD {id} {addr} acknowledged{RESET}")
                     continue
+                # Client response handling
+                elif "request" in res:
+                    # str_res = res.strip()
+                    req_num = res.split("request")[1].split()[0]
+                    client_id = res.split("C")[1].split(":")[0]
+                    
+                    # req_num = str_res.split("request").strip()[0]
+                    # client_id = str_res.split("C").strip()[0]
+                    print("printing reqnum parsing, res: ", res, "req_num: ", req_num, "client_id: ", client_id)
+                    # update client state
+                    with state_lock:
+                        current_state = my_state
+                        my_state += 1
+                    
+                    print(f"{YELLOW}[{ts()}] Server {id}: State changed from {current_state} to {my_state}{RESET}")
+                    reply = f"Server{id}: Response to request{req_num} from client {client_id}: {my_state}\n"
+                    conn.sendall(reply.encode())
+                    continue
+                
             
-            with state_lock:
-                current_state = my_state
-                my_state += 1
-            print(f"Server state before reply: {current_state}")
-
-            # ADDITION: showin afterstate 
-            print(f"{YELLOW}[{ts()}] Server {id}: State changed from {current_state} to {my_state}{RESET}")
-
-
-            # echo data back 
-            reply = f"Message received from S{id}. Server state: {current_state}"
-            reply += "\n"
-            conn.sendall(reply.encode())
-            conn.sendall(res.encode())
-            print("Echoed to client")
     except ConnectionResetError:
         print(f"{addr} disconnected")
     finally:
@@ -84,7 +90,8 @@ def main():
         # accept connections in a loop
         while True:
             conn, addr = s.accept()
-            print(f"Connected to client")
+            print(f"Connected to something")
+            clients.append((conn, addr))
             threading.Thread(target=new_conn, args=(conn, addr)).start()
 
 main()

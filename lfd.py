@@ -113,7 +113,7 @@ def main():
             except socket.timeout:
                 print("Timeout exceeded, server failed")
             except socket.error as e:
-                print(f"Error sending heartbeat: {e}")
+                print(f"Error sending heartbeat")
                 print(f"{RED}[{ts()}] LFD{id}: Server {id} died")
                 connected = False
                 s.close()
