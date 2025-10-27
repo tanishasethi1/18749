@@ -46,7 +46,6 @@ def receive_data(sock, server_id):
                 print("Received message:", res)
                 # print(f"{BLUE}[{ts()}] Client {client_id}: Send ACK for received message{RESET}")
                 if "Response to request" in res:
-                    # req_num = data.split("request").strip()[0]
                     req_num = res.split("request")[1].split()[0]
                     server_id = res.split("Server")[1].split()[0]
                     acks_received[server_id] = res
@@ -68,7 +67,7 @@ def main():
     # ADDITION: simple request counter
     req_num = 0
 
-    servers = [(SERVER1_HOST, SERVER1_PORT, SERVER1_ID), (SERVER2_HOST, SERVER2_PORT, SERVER2_ID)]#, (SERVER3_HOST, SERVER3_PORT, SERVER3_ID)]
+    servers = [(SERVER1_HOST, SERVER1_PORT, SERVER1_ID), (SERVER2_HOST, SERVER2_PORT, SERVER2_ID), (SERVER3_HOST, SERVER3_PORT, SERVER3_ID)]
     connected_sockets = []
     
     # connections to all 3 servers
@@ -108,32 +107,5 @@ def main():
             time.sleep(15)
 
         req_num += 1
-
-        # time.sleep(30)
-            
-
-    # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    #     s.connect((HOST, PORT))
-    #     print(f"Client {client_id} connected to server")
-
-    #     while True:
-    #         msg = input(">>> ")
-    #         if msg.lower() == "quit":
-    #             break
-
-    #         # ADDITION: increment request number
-    #         req_num += 1
-    #         formatted = f"<C{client_id}, req{req_num}>: {msg}"
-    #         print(f"{BLUE}[{ts()}] Client 1: Sending {formatted}{RESET}")
-            
-    #         msg = f"Client {client_id}: {msg}"
-    #         s.sendall(msg.encode())
-    #         print("Message sent")
-    #         data = s.recv(1024).decode()
-
-    #         # ADDITION: timestamp the received reply
-    #         print(f"{BLUE}[{ts()}] Client 1: Received reply: {data!r}{RESET}")
-            
-    #         print(f"Server received {data!r}")
 
 main()

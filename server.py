@@ -46,13 +46,9 @@ def new_conn(conn, addr):
                     continue
                 # Client response handling
                 elif "request" in res:
-                    # str_res = res.strip()
                     req_num = res.split("request")[1].split()[0]
                     client_id = res.split("C")[1].split(":")[0]
                     
-                    # req_num = str_res.split("request").strip()[0]
-                    # client_id = str_res.split("C").strip()[0]
-                    print("printing reqnum parsing, res: ", res, "req_num: ", req_num, "client_id: ", client_id)
                     # update client state
                     with state_lock:
                         current_state = my_state
