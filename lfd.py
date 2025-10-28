@@ -25,7 +25,7 @@ def main():
     parser.add_argument("-f", "--freq", type=int, default=10)
     parser.add_argument("-t", "--timeout", type=int, default=5)
     parser.add_argument("-i", "--id", type=int, default=1)
-    parser.add_argument("--gfd_host", type=str, default=GFD_HOST)
+    parser.add_argument("--gfd_host", type=str, default=HOST)
     parser.add_argument("--gfd_port", type=int, default=GFD_PORT)
 
     args = parser.parse_args()
