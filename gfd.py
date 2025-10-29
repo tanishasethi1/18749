@@ -40,7 +40,7 @@ def handle_lfd(conn, addr):
             # check if heartbeat is from a new LFD
             # need to determine who it's from, and whether it's a connect/disconnect message
             # data in format: "LFD<id>: Connected/Disconnected/Heartbeat"
-            print("data :", data)
+            # print("data :", data)
             lfd = data.split(":")[0].strip()
             lfd_id = lfd[-1]
             conn_status = data.split(":")[1].strip()

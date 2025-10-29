@@ -148,9 +148,9 @@ def main():
                 # print(f"{GREEN}[{ts()}] All ACKS received for request{req_num}{RESET}")
                 acks_received.clear()
                 break
-            if time.time() - start > 10:
-                print(f"{CYAN}[{ts()}] Timeout waiting for ACK for request{req_num}{RESET}")
-                break
+            # if time.time() - start > 30:
+            #     print(f"{CYAN}[{ts()}] Timeout waiting for ACK for request{req_num}{RESET}")
+            #     break
             time.sleep(0.5)
             
             # time.sleep(15)

@@ -86,7 +86,7 @@ def main():
         # accept connections in a loop
         while True:
             conn, addr = s.accept()
-            print(f"Connected to something")
+            # print(f"Connected to something")
             clients.append((conn, addr))
             threading.Thread(target=new_conn, args=(conn, addr)).start()
 
