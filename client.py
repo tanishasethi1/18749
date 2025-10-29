@@ -91,7 +91,7 @@ def main():
     parser = argparse.ArgumentParser(description="Client")
     parser.add_argument("-i", "--id", type=int, default=1)
     #manual mode
-    parser.add_argument("--manual", action="store_true")
+    parser.add_argument("-m","--manual", action="store_true", default=False)
 
     args = parser.parse_args()
     global client_id
