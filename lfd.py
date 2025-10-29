@@ -16,7 +16,7 @@ HOST = "127.0.0.1" #change to server ip
 PORT = 65080
 TIMEOUT = 10
 
-HOST = "127.0.0.1" #change to server ip
+GFD_HOST = "127.0.0.1" #change to server ip
 GFD_PORT = 65084
 
 def main():
