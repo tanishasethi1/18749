@@ -16,13 +16,13 @@ HOST = "127.0.0.1" #change to server ip
 PORT = 65080
 TIMEOUT = 10
 
-HOST = "127.0.0.1" #change to server ip
+GFD_HOST = "127.0.0.1" #change to server ip
 GFD_PORT = 65084
 
 def main():
     data = ""
     parser = argparse.ArgumentParser(description="Heartbeat")
-    parser.add_argument("-f", "--freq", type=int, default=10)
+    parser.add_argument("-f", "--freq", type=int, default=1)
     parser.add_argument("-t", "--timeout", type=int, default=5)
     parser.add_argument("-i", "--id", type=int, default=1)
     parser.add_argument("--gfd_host", type=str, default=GFD_HOST)

@@ -67,7 +67,7 @@ def main():
     # ADDITION: simple request counter
     req_num = 0
 
-    servers = [(SERVER1_HOST, SERVER1_PORT, SERVER1_ID), (SERVER2_HOST, SERVER2_PORT, SERVER2_ID), (SERVER3_HOST, SERVER3_PORT, SERVER3_ID)]
+    servers = [(SERVER1_HOST, SERVER1_PORT, SERVER1_ID), (SERVER2_HOST, SERVER2_PORT, SERVER2_ID)]#, (SERVER3_HOST, SERVER3_PORT, SERVER3_ID)]
     connected_sockets = []
     
     # connections to all 3 servers
@@ -104,7 +104,7 @@ def main():
                 acks_received.clear()
                 break
             
-            time.sleep(15)
+            # time.sleep(15)
 
         req_num += 1
 
