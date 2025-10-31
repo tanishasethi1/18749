@@ -60,10 +60,13 @@ def main():
     # create TCP socket
     parser = argparse.ArgumentParser(description="Client")
     parser.add_argument("-i", "--id", type=int, default=1)
+    parser.add_argument("-p", "--passive", type=bool, default=False)
 
     args = parser.parse_args()
     global client_id
     client_id = args.id
+    global passive
+    passive = args.passive
     # ADDITION: simple request counter
     req_num = 0
 
@@ -75,13 +78,13 @@ def main():
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
         try:
+            print("connecting to: ", (servers[i][0], servers[i][1]))
             s.connect((servers[i][0], servers[i][1]))
             print(f"Client {client_id} connected to server {i+1} at {servers[i][0]}:{servers[i][1]}")
             connected_sockets.append(s)
-
             threading.Thread(target=receive_data, args=(s, servers[i][2])).start()
         except Exception as e:
-            print(f"Server {i+1} not available")
+            print(f"Server {i+1} not available: {e}")
 
     # message sending (continuous loop)
     while True:
@@ -89,6 +92,10 @@ def main():
 
         # sending to the three servers...?
         for i in range(len(servers)):
+            if passive and i >= 1: #only send messages to server 1
+                continue
+            print(i)
+            print(connected_sockets)
             curr_socket = connected_sockets[i]
             try:
                 curr_socket.sendall(message.encode())
@@ -104,7 +111,7 @@ def main():
                 acks_received.clear()
                 break
             
-            # time.sleep(15)
+            time.sleep(15)
 
         req_num += 1
 
