@@ -70,7 +70,7 @@ def main():
     # ADDITION: simple request counter
     req_num = 0
 
-    servers = [(SERVER1_HOST, SERVER1_PORT, SERVER1_ID), (SERVER2_HOST, SERVER2_PORT, SERVER2_ID)]#, (SERVER3_HOST, SERVER3_PORT, SERVER3_ID)]
+    servers = [(SERVER1_HOST, SERVER1_PORT, SERVER1_ID), (SERVER2_HOST, SERVER2_PORT, SERVER2_ID), (SERVER3_HOST, SERVER3_PORT, SERVER3_ID)]
     connected_sockets = []
     
     # connections to all 3 servers
@@ -94,8 +94,8 @@ def main():
         for i in range(len(servers)):
             if passive and i >= 1: #only send messages to server 1
                 continue
-            print(i)
-            print(connected_sockets)
+            # print(i)
+            # print(connected_sockets)
             curr_socket = connected_sockets[i]
             try:
                 curr_socket.sendall(message.encode())

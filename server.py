@@ -59,7 +59,11 @@ def new_conn(conn, addr):
                 break
             else:
                 res = data.decode()
-                print("Received message:", res)
+                if "CHECKPOINT: state=" in res:
+                    print(f"{CYAN}[{ts()}] Received message: ", res)
+                else:
+                    print("Received message: ", res)
+                
                 # LFD response handling
                 if res == "Heartbeat":
                     # ADDITION: respond to heartbeat so LFD can confirm
@@ -112,6 +116,7 @@ def connect_to_backups():
                 # connected_backups.append(s, id)
                 s.settimeout(TIMEOUT) 
             except Exception:
+                s.close()
                 continue
                 # print("Failed to set up secondary connection ", {e})
                 
@@ -148,11 +153,32 @@ def main():
     # global checkpoint_count
     # checkpoint_count= 0
     id = args.id
+
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+
+        if hasattr(socket, 'SO_REUSEPORT'):
+            # Set SO_REUSEPORT to 1 (or True) to enable it
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+            print("SO_REUSEPORT set successfully.")
+        else:
+            print("SO_REUSEPORT not available, using SO_REUSEADDR if needed.")
+            # Fallback to SO_REUSEADDR for older systems or certain platforms
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+
         # bind socket to host and port
         s.bind((HOST, PORT+id))
         # listen for connections
         s.listen()
+
+        # s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # # bind socket to host and port (handle error if port already in use)
+        # try:
+        #    s.bind((HOST, PORT + id))
+        # except OSError as e:
+        #     print(f"{RED}[{ts()}] Failed to bind to {HOST}:{PORT+id}: {e}{RESET}")
+        #     print(f"Hint: another process may be listening on that port. Check with `lsof -i :{PORT+id}` and stop it or choose a different --id.")
+        #     return
 
         #ADDITION
         print(f"[{ts()}] Server listening on {HOST}:{PORT+id}")
