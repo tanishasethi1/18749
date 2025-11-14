@@ -21,30 +21,31 @@ GFD_HOST = "127.0.0.1" #change to GFD ip
 GFD_PORT = 65084
 
 member_count = 0
-membership = {}
-
-def print_membership():
-    # message format:
-    # RM: x members - S1, S2, ...
-    members = ""
-    for lfd_id in membership.keys():
-        members += f"S{lfd_id}, "
+members_list = {}
 
 # talk to GFD
 def handle_gfd(conn, addr):
     # handle updates
-    member_count = 0
-    members_list = None
+    global member_count, members_list
     try:
         while True:
             data = conn.recv(1024).decode().strip()
             if not data:
                 break
 
-            # data in format: "GFD: {membership} members - S1, S2, ..."
+            # data in format: "GFD: {membership} members - Server added = {new/disconnected serverID }."
             print("data :", data)
-            membership = data.split("-")[1].strip()
-            members_list = membership.split(", ")
+            new_member_id = data.split("=")[1].strip()
+            print("new_member_id :", new_member_id)
+
+            if "Server added" in data:
+                if new_member_id not in members_list.keys():
+                    members_list[new_member_id] = True
+                    member_count += 1
+            if "Server disconnected" in data:
+                if new_member_id in members_list.keys():
+                    members_list.pop(new_member_id)
+                    member_count -= 1
             print(members_list)
 
     except Exception as e:

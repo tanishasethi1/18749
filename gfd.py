@@ -23,7 +23,7 @@ membership = {}
 lock = threading.Lock()
 
 rm_connected = False
-# rm_sock = None
+rm_sock = None
 
 def print_membership():
     # message format:
@@ -59,8 +59,8 @@ def connect_to_rm():
 #         conn.sendall(message.encode())
 
 # makes connection, registers which lfd, adds to membership list
-def handle_lfd(conn, addr, rm_sock):
-    global rm_connected
+def handle_lfd(conn, addr):
+    global rm_connected, rm_sock
     member_count = len(membership)
     # handle heartbeats
     try:
@@ -88,7 +88,7 @@ def handle_lfd(conn, addr, rm_sock):
                     print(membership)
                     print("printed membership \n")
                     # Update changes to RM
-                    message = f"GFD: {len(membership)} members - Server added: {lfd_id}"
+                    message = f"GFD: {len(membership)} members - Server added = {lfd_id}"
                     print(rm_connected, rm_sock)
                     if rm_connected and rm_sock:
                         rm_sock.sendall(message.encode())
@@ -101,7 +101,7 @@ def handle_lfd(conn, addr, rm_sock):
                     membership.pop(lfd_id)
                     print_membership()
     
-                    message = f"GFD: {len(membership)} members - Server disconnected: {lfd_id}"
+                    message = f"GFD: {len(membership)} members - Server disconnected = {lfd_id}"
                     if rm_connected and rm_sock:
                         rm_sock.sendall(message.encode())
                     # print(f"GFD: {len(membership)} members")
@@ -127,9 +127,8 @@ def handle_lfd(conn, addr, rm_sock):
     return 
 
 def main():
-    rm_sock = None
     try:
-        rm_sock = threading.Thread(target=connect_to_rm).start()
+        threading.Thread(target=connect_to_rm).start()
         # rm_sock = connect_to_rm()
         # threading.Thread(target=handle_rm, args=(rm_sock)).start()
     except:
@@ -153,7 +152,7 @@ def main():
             conn, addr = s.accept()
             # with conn:
             print(f"Connected by {addr}")
-            threading.Thread(target=handle_lfd, args=(conn, addr, rm_sock)).start()   
+            threading.Thread(target=handle_lfd, args=(conn, addr)).start()   
             
     return
 
