@@ -21,18 +21,18 @@ CYAN = "\033[96m"
 def ts():
     return datetime.now().strftime("%H:%M:%S")
 
-HOST = "172.26.112.101"
+HOST = "127.0.0.1"
 PORT = 65080
 
-SERVER1_HOST = "172.26.57.64"
+SERVER1_HOST = "127.0.0.1"
 SERVER1_PORT = 65081
 SERVER1_ID = 1
 
-SERVER2_HOST = "172.26.112.101"
+SERVER2_HOST = "127.0.0.1"
 SERVER2_PORT = 65082
 SERVER2_ID = 2
 
-SERVER3_HOST = "172.26.109.66"
+SERVER3_HOST = "127.0.0.1"
 SERVER3_PORT = 65083
 SERVER3_ID = 3
 
@@ -159,9 +159,7 @@ def main():
         if hasattr(socket, 'SO_REUSEPORT'):
             # Set SO_REUSEPORT to 1 (or True) to enable it
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-            print("SO_REUSEPORT set successfully.")
         else:
-            print("SO_REUSEPORT not available, using SO_REUSEADDR if needed.")
             # Fallback to SO_REUSEADDR for older systems or certain platforms
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 

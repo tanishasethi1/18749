@@ -12,11 +12,11 @@ RESET = "\033[0m"
 def ts():
     return datetime.now().strftime("%H:%M:%S")
 
-HOST = "172.26.112.101" #change to server ip
+HOST = "127.0.0.1" #change to server ip
 PORT = 65080
 TIMEOUT = 10
 
-GFD_HOST = "172.26.82.155" #change to server ip
+GFD_HOST = "127.0.0.1" #change to server ip
 GFD_PORT = 65084
 
 def main():
