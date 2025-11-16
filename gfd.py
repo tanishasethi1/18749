@@ -25,6 +25,8 @@ lock = threading.Lock()
 rm_connected = False
 rm_sock = None
 
+current_leader = 0
+
 def print_membership():
     # message format:
     # GFD: x members - S1, S2, ...
@@ -50,13 +52,20 @@ def connect_to_rm():
         time.sleep(5)
 
 # #send and receive messages to/from RM
-# def handle_rm(sock):
-#     members = ""
-#     for lfd_id in membership.keys():
-#         members += f"S{lfd_id}, "
-#     while True:
-#         message = f"GFD: {len(membership)} members - {members[:-2]}"
-#         conn.sendall(message.encode())
+def handle_rm():
+    global rm_connected, rm_sock, current_leader
+    try:
+        while rm_connected:
+            data = rm_sock.recv(1024).decode().strip()
+            if not data:
+                break
+            print("rm to gfd data: ", data)
+            if "New Leader" in data:
+                current_leader = data.split(":")[1].strip()
+                print(f"{GREEN}[{ts()}] GFD: New leader is Server {current_leader}{RESET}")
+    except Exception as e:
+        print(f"Error handling RM {rm_sock}: {e}")
+
 
 # makes connection, registers which lfd, adds to membership list
 def handle_lfd(conn, addr):
@@ -68,15 +77,12 @@ def handle_lfd(conn, addr):
             data = conn.recv(1024).decode().strip()
             if not data:
                 break
-            # check if heartbeat is from a new LFD
-            # need to determine who it's from, and whether it's a connect/disconnect message
-            # data in format: "LFD<id>: Connected/Disconnected/Heartbeat"
-            print("data :", data)
+
+            # receiving data from LFD
             lfd = data.split(":")[0].strip()
             lfd_id = lfd[-1]
             conn_status = data.split(":")[1].strip()
-            print("conn_status :", conn_status)
-            
+            # print("conn_status :", conn_status)
         
             # check if server connected to its LFD
             if "Server Connected" == conn_status:
@@ -129,8 +135,7 @@ def handle_lfd(conn, addr):
 def main():
     try:
         threading.Thread(target=connect_to_rm).start()
-        # rm_sock = connect_to_rm()
-        # threading.Thread(target=handle_rm, args=(rm_sock)).start()
+        threading.Thread(target=handle_rm).start()
     except:
         print(f"Cannot connect to RM")
 
@@ -153,7 +158,6 @@ def main():
             # with conn:
             print(f"Connected by {addr}")
             threading.Thread(target=handle_lfd, args=(conn, addr)).start()   
-            
     return
 
 main()

@@ -23,10 +23,12 @@ GFD_PORT = 65084
 member_count = 0
 members_list = {}
 
+current_leader = 0
+
 # talk to GFD
 def handle_gfd(conn, addr):
     # handle updates
-    global member_count, members_list
+    global member_count, members_list, current_leader
     try:
         while True:
             data = conn.recv(1024).decode().strip()
@@ -42,10 +44,23 @@ def handle_gfd(conn, addr):
                 if new_member_id not in members_list.keys():
                     members_list[new_member_id] = True
                     member_count += 1
+                if current_leader == 0:
+                    current_leader = new_member_id
+                    print(f"{GREEN}[{ts()}] RM: New leader is Server {current_leader}{RESET}") #send message to gfd?
+                    message = f"RM: New Leader: {current_leader}"
+                    conn.sendall(message.encode())
             if "Server disconnected" in data:
                 if new_member_id in members_list.keys():
                     members_list.pop(new_member_id)
                     member_count -= 1
+                if new_member_id == current_leader: #re-elect leader to first server in the list
+                    if len(members_list) > 0:
+                        current_leader = next(iter(members_list))
+                        print(f"{GREEN}[{ts()}] RM: New leader is Server {current_leader}{RESET}") #send message to gfd?
+                        message = f"RM: New Leader: {current_leader}"
+                        conn.sendall(message.encode())
+                    else:
+                        current_leader = 0
             print(members_list)
 
     except Exception as e:
