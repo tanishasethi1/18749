@@ -26,6 +26,7 @@ rm_connected = False
 rm_sock = None
 
 current_leader = 0
+updated_leader = False
 
 def print_membership():
     # message format:
@@ -55,16 +56,26 @@ def connect_to_rm():
 def handle_rm():
     global rm_connected, rm_sock, current_leader
     try:
-        while rm_connected:
-            data = rm_sock.recv(1024).decode().strip()
-            if not data:
-                break
+        while True:
+            print(f"rm connected: {rm_connected}, rm_sock: {rm_sock}")
+            if not rm_connected and not rm_sock:
+                connect_to_rm()
+                continue
+            try:
+                data = rm_sock.recv(1024).decode().strip()
+                if not data:
+                    continue
+            except:
+                # print(f"{YELLOW}[{ts()}] GFD: Timeout?{RESET}")
+                continue
+            
             print("rm to gfd data: ", data)
             if "New Leader" in data:
-                current_leader = data.split(":")[1].strip()
-                print(f"{GREEN}[{ts()}] GFD: New leader is Server {current_leader}{RESET}")
+                current_leader = data.split("New Leader: ")[1].strip()
+                print(f"{BLUE}[{ts()}] GFD: New leader is Server {current_leader}{RESET}")
+                # print(f"Updated leader: {current_leader} - {updated_leader}")
     except Exception as e:
-        print(f"Error handling RM {rm_sock}: {e}")
+        print(f"Error handling RM {rm_connected}: {e}")
 
 
 # makes connection, registers which lfd, adds to membership list
@@ -83,6 +94,9 @@ def handle_lfd(conn, addr):
             lfd_id = lfd[-1]
             conn_status = data.split(":")[1].strip()
             # print("conn_status :", conn_status)
+            
+            message = f"GFD: New Leader: {current_leader}\n"
+            conn.sendall(message.encode())
         
             # check if server connected to its LFD
             if "Server Connected" == conn_status:
@@ -126,6 +140,7 @@ def handle_lfd(conn, addr):
                 #     membership[lfd_id] = 1
                 #     print(f"GFD: {len(membership)} members")
                 print(f"GFD: LFD {lfd_id} connected")
+            
                 
     except Exception as e:
         print(f"Error handling LFD {addr}: {e}")
@@ -134,7 +149,8 @@ def handle_lfd(conn, addr):
 
 def main():
     try:
-        threading.Thread(target=connect_to_rm).start()
+        # threading.Thread(target=connect_to_rm).start()
+        connect_to_rm()
         threading.Thread(target=handle_rm).start()
     except:
         print(f"Cannot connect to RM")
@@ -155,7 +171,6 @@ def main():
         # connecting LFDs
         while True:
             conn, addr = s.accept()
-            # with conn:
             print(f"Connected by {addr}")
             threading.Thread(target=handle_lfd, args=(conn, addr)).start()   
     return
