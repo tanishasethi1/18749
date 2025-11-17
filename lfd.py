@@ -22,6 +22,7 @@ TIMEOUT = 10
 GFD_HOST = "127.0.0.1" #change to server ip
 GFD_PORT = 65084    
 
+old_leader = 0
 current_leader = 0
 
 heartbeat_interval = 10
@@ -35,6 +36,7 @@ connected = False
 def handle_gfd():
     # connecting to gfd
     global gfd_connected, gfd_sock
+    global current_leader
     # Try connecting to GFD, but do not crash if unavailable
 
     while not gfd_connected:
@@ -88,6 +90,7 @@ def handle_server():
     global connected
     global gfd_sock
     global current_leader
+    global old_leader
 
     while not connected:
         try:
@@ -108,10 +111,12 @@ def handle_server():
                 print(f"{GREEN}[{ts()}] LFD{id}: sending heartbeat to S{id}{RESET}")
 
                 # Send "New Leader" message only if the connection is active
-                if current_leader != 0:  # Only send the leader message if there is a valid leader
+                print(old_leader, current_leader)
+                if current_leader != old_leader and current_leader != 0:  # Only send the leader message if there is a valid leader
                     msg = f"GFD: New Leader: {current_leader}"
                     s.sendall(msg.encode())
                     print(f"{GREEN}[{ts()}] LFD{id}: sending new leader info to server{RESET}")
+                    old_leader = current_leader
                 
                 # Wait briefly for ACK to confirm server alive
                 s.settimeout(TIMEOUT)
