@@ -112,6 +112,8 @@ def connect_to_backups():
         for id in backups:
             if id != primary:
                 (host, port, connected, sock) = backups[id]
+                if (connected and sock is not None):
+                    continue
                 try:
                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     s.connect((host, port))
