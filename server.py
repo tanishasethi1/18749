@@ -66,7 +66,8 @@ def new_conn(conn, addr):
 
                 #Update new leader
                 if "New Leader" in res:
-                    new_leader = res.split("New Leader: ")[1].split("\n")[0].strip()
+                    new_leader = res.split("New Leader: ")[1].strip()
+                    print(new_leader)
                     if new_leader != primary:
                         primary = new_leader
                         print(f"{GREEN}[{ts()}] Server {id}: New Leader is server {primary}{RESET}")

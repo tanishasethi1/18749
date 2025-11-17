@@ -100,38 +100,40 @@ def handle_server():
         time.sleep(2)
 
     while True:
-        if connected: #heartbeats for the server
+        if connected:  # heartbeats for the server
             try: 
+                # Send heartbeat first
                 s.sendall("Heartbeat".encode())
                 print(f"Sending heartbeat at {int(time.time())}")
-                # ADDITION: LFD (inside heartbeat loop)
                 print(f"{GREEN}[{ts()}] LFD{id}: sending heartbeat to S{id}{RESET}")
 
-                # send message to server upon new leader?
-                msg = f"GFD: New Leader: {current_leader}"
-                s.sendall(msg.encode())
-
-                # ADDITION: wait briefly for ACK to confirm server alive
+                # Send "New Leader" message only if the connection is active
+                if current_leader != 0:  # Only send the leader message if there is a valid leader
+                    msg = f"GFD: New Leader: {current_leader}"
+                    s.sendall(msg.encode())
+                    print(f"{GREEN}[{ts()}] LFD{id}: sending new leader info to server{RESET}")
+                
+                # Wait briefly for ACK to confirm server alive
                 s.settimeout(TIMEOUT)
                 try:
                     resp = s.recv(3).decode()
                     print(f"Received response: {resp}")
                     if "ACK" in resp:
                         print(f"{BLUE}[{ts()}] LFD{id}: ACK received from server{RESET}")
-
                 except socket.timeout:
-                    print(f"{RED}[{ts()}] LFD{id}: No ACK (timeout={TIMEOUT}s) server may have failed{RESET}")
+                    print(f"{RED}[{ts()}] LFD{id}: No ACK (timeout={TIMEOUT}s), server may have failed{RESET}")
                     connected = False
                     s.close()
 
             except socket.timeout:
                 print("Timeout exceeded, server failed")
             except socket.error as e:
-                print(f"Error sending heartbeat")
+                print(f"Error sending heartbeat: {e}")
                 print(f"{RED}[{ts()}] LFD{id}: Server {id} died")
                 connected = False
                 s.close()
                 gfd_sock.sendall(f"LFD{id}: Server Disconnected".encode())
+
 
         else:
             try:
