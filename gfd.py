@@ -57,7 +57,7 @@ def handle_rm():
     global rm_connected, rm_sock, current_leader
     try:
         while True:
-            print(f"rm connected: {rm_connected}, rm_sock: {rm_sock}")
+            # print(f"rm connected: {rm_connected}, rm_sock: {rm_sock}")
             if not rm_connected and not rm_sock:
                 connect_to_rm()
                 continue

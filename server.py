@@ -39,10 +39,10 @@ SERVER3_ID = 3
 TIMEOUT = 10
 CHECKPOINT_FREQ = 5
 
+backups = {1: [SERVER1_HOST, SERVER1_PORT, False, None], 2: [SERVER2_HOST, SERVER2_PORT, False, None], 3: [SERVER3_HOST, SERVER3_PORT, False, None]}
+
 state_lock = threading.Lock()
 my_state = 0
-
-connected_backups = []
 
 checkpoint_count = 0
 
@@ -66,11 +66,15 @@ def new_conn(conn, addr):
 
                 #Update new leader
                 if "New Leader" in res:
-                    new_leader = res.split("New Leader: ")[1].strip()
-                    print(new_leader)
+                    new_leader = res.split("New Leader: ")[1].strip().split('\n')[0]
                     if new_leader != primary:
-                        primary = new_leader
-                        print(f"{GREEN}[{ts()}] Server {id}: New Leader is server {primary}{RESET}")
+                        primary = int(new_leader)
+                        print(f"{GREEN}[{ts()}] Server {id}: New Leader is server {primary} {primary == id}{RESET}")
+                        if int(primary) == int(id):
+                            print(f"{GREEN}[{ts()}] Server {id}: I am the new Primary{RESET}")
+                            threading.Thread(target=connect_to_backups).start()
+                            threading.Thread(target=send_checkpoint).start()
+                        
                         continue
                 
                 # LFD response handling
@@ -105,27 +109,24 @@ def new_conn(conn, addr):
 # 
 
 def connect_to_backups():
-    global backups, primary
-    backups = {1: [SERVER1_HOST, SERVER1_PORT, False, None], 2: [SERVER2_HOST, SERVER2_PORT, False, None], 3: [SERVER3_HOST, SERVER3_PORT, False, None]}
-
-    while True:
-        for id in backups:
-            if id != primary:
-                (host, port, connected, sock) = backups[id]
-                if (connected and sock is not None):
+    global backups, primary, id
+    
+    while primary == id:
+        for backup_id in backups:
+            if backup_id != primary:
+                (host, port, connected, sock) = backups[backup_id]
+                if (connected):
                     continue
                 try:
                     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     s.connect((host, port))
-                    backups[id][2] = True
-                    backups[id][3] = s
-                    # connected_backups.append(s, id)
+                    backups[backup_id][2] = True
+                    backups[backup_id][3] = s
                     s.settimeout(TIMEOUT) 
                 except Exception:
                     s.close()
                     continue
                     # print("Failed to set up secondary connection ", {e})
-                
                 
 
 def send_checkpoint():
@@ -133,22 +134,22 @@ def send_checkpoint():
     global CHECKPOINT_FREQ
     global my_state
     global backups
+    global id
+    print(f"{CYAN}[{ts()}] Server {id} starting checkpointing to backups...{RESET}")
 
-    while True:
+    while primary == id:
         sleep(CHECKPOINT_FREQ)
         message = f"CHECKPOINT: state={my_state} checkpoint_count={checkpoint_count}"
         print(backups)
         checkpoint_count+=1
-        for backup_id, (host, port, connected, sock) in backups.items():
-            if int(backup_id) == int(primary):
-                continue
+        for backup_id in backups:
+            (host, port, connected, sock) = backups[backup_id]
             if not connected:
                 continue
+
             try:
-                print(backup_id, primary)
                 sock.sendall(message.encode())
-                print(f"{CYAN}[{ts()}] Server {id} sending checkpoint to server{host}{RESET}")
-                
+                print(f"{CYAN}[{ts()}] Server {id} sending checkpoint to server {host}{RESET}")
             except Exception as e:
                 print("Failed to send checkpoint to server")
 
@@ -166,6 +167,7 @@ def main():
     # global checkpoint_count
     # checkpoint_count= 0
     id = args.id
+    global primary
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
@@ -193,9 +195,12 @@ def main():
 
         #ADDITION
         print(f"[{ts()}] Server listening on {HOST}:{PORT+id}")
+
+        print(f"Server {id} started. Primary is Server {primary} is {primary==id}")
         if primary == id and args.passive:
+            print(f"{GREEN}[{ts()}] Server {id}: I am the Primary: STARTING THREADS{RESET}")
             threading.Thread(target=connect_to_backups).start()
-            # threading.Thread(target=send_checkpoint).start()
+            threading.Thread(target=send_checkpoint).start()
 
         # accept connections in a loop
         while True:
