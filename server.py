@@ -21,6 +21,7 @@ CYAN = "\033[96m"
 def ts():
     return datetime.now().strftime("%H:%M:%S")
 
+# own host and port
 HOST = "127.0.0.1"
 PORT = 65080
 
@@ -51,6 +52,7 @@ primary = 1 # set to primary's id
 def new_conn(conn, addr):
     global my_state, primary
     res = ""
+
     try:
         while True:
             # receive data
@@ -67,11 +69,13 @@ def new_conn(conn, addr):
                 #Update new leader
                 if "New Leader" in res:
                     new_leader = res.split("New Leader: ")[1].strip()
-                    print(new_leader)
+                    # print(new_leader)
                     if new_leader != primary:
                         primary = new_leader
                         print(f"{GREEN}[{ts()}] Server {id}: New Leader is server {primary}{RESET}")
-                        continue
+                        # msg = f"Server{id}: New Leader: {primary}"
+                        # conn.sendall(msg.encode())
+                        # continue
                 
                 # LFD response handling
                 if "Heartbeat" in res:
@@ -79,6 +83,7 @@ def new_conn(conn, addr):
                     conn.sendall("ACK".encode())
                     print(f"{GREEN}[{ts()}] Server {id}: Heartbeat from LFD {id} {addr} acknowledged{RESET}")
                     continue
+
                 # Client response handling
                 elif "request" in res:
                     req_num = res.split("request")[1].split()[0]
@@ -135,7 +140,7 @@ def send_checkpoint():
     while True:
         sleep(CHECKPOINT_FREQ)
         message = f"CHECKPOINT: state={my_state} checkpoint_count={checkpoint_count}"
-        print(backups)
+        # print(backups)
         checkpoint_count+=1
         for backup_id, (host, port, connected, sock) in backups.items():
             if int(backup_id) == int(primary):
@@ -143,7 +148,7 @@ def send_checkpoint():
             if not connected:
                 continue
             try:
-                print(backup_id, primary)
+                # print(backup_id, primary)
                 sock.sendall(message.encode())
                 print(f"{CYAN}[{ts()}] Server {id} sending checkpoint to server{host}{RESET}")
                 
@@ -180,14 +185,6 @@ def main():
         # listen for connections
         s.listen()
 
-        # s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        # # bind socket to host and port (handle error if port already in use)
-        # try:
-        #    s.bind((HOST, PORT + id))
-        # except OSError as e:
-        #     print(f"{RED}[{ts()}] Failed to bind to {HOST}:{PORT+id}: {e}{RESET}")
-        #     print(f"Hint: another process may be listening on that port. Check with `lsof -i :{PORT+id}` and stop it or choose a different --id.")
-        #     return
 
         #ADDITION
         print(f"[{ts()}] Server listening on {HOST}:{PORT+id}")
@@ -198,7 +195,7 @@ def main():
         # accept connections in a loop
         while True:
             conn, addr = s.accept()
-            print(f"Connected by {addr}")
+            # print(f"Connected by {addr}")
             threading.Thread(target=new_conn, args=(conn, addr)).start()
 
 main()

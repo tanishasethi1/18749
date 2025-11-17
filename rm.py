@@ -61,6 +61,8 @@ def handle_gfd(conn, addr):
                         conn.sendall(message.encode())
                     else:
                         current_leader = 0
+                        message = f"RM: New Leader: {current_leader}"
+                        conn.sendall(message.encode())
             print(members_list)
 
     except Exception as e:

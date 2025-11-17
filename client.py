@@ -33,6 +33,8 @@ SERVER3_ID = 3
 acks_received = {}
 messages = []
 
+new_leader = 0
+
 def receive_data(sock, server_id):
     global acks_received
     try:
@@ -53,6 +55,9 @@ def receive_data(sock, server_id):
                         print(f"Request {req_num}: Discarded duplicate message from server {server_id}")
                     else:
                         messages.append(res)
+                if "New Leader" in res:
+                    new_leader = res.split("New Leader: ")[1].strip()
+                    print(f"{GREEN}[{ts()}] Client {client_id}: New Leader is server {new_leader}{RESET}")
     except Exception as e:
           print(f"Error receiving data: {e}")
 
@@ -70,8 +75,9 @@ def main():
     # ADDITION: simple request counter
     req_num = 0
 
-    servers = [(SERVER1_HOST, SERVER1_PORT, SERVER1_ID), (SERVER2_HOST, SERVER2_PORT, SERVER2_ID), (SERVER3_HOST, SERVER3_PORT, SERVER3_ID)]
+    servers = [(SERVER1_HOST, SERVER1_PORT, SERVER1_ID), (SERVER2_HOST, SERVER2_PORT, SERVER2_ID)]#, (SERVER3_HOST, SERVER3_PORT, SERVER3_ID)]
     connected_sockets = []
+    connected_servers = []
     
     # connections to all 3 servers
     for i in range(len(servers)):
@@ -82,6 +88,7 @@ def main():
             s.connect((servers[i][0], servers[i][1]))
             print(f"Client {client_id} connected to server {i+1} at {servers[i][0]}:{servers[i][1]}")
             connected_sockets.append(s)
+            connected_servers.append(servers[i][2])
             threading.Thread(target=receive_data, args=(s, servers[i][2])).start()
         except Exception as e:
             print(f"Server {i+1} not available: {e}")
@@ -91,17 +98,25 @@ def main():
         message = f"C{client_id}: request{req_num} --> Hello!"
 
         # sending to the three servers...?
-        for i in range(len(servers)):
-            if passive and i >= 1: #only send messages to server 1
-                continue
-            # print(i)
-            # print(connected_sockets)
-            curr_socket = connected_sockets[i]
-            try:
-                curr_socket.sendall(message.encode())
-                print(f"{BLUE}[{ts()}] Client {client_id}: Sending {message}{RESET}")
-            except Exception as e:
-                print(f"Failed to send message to server {i+1}")
+
+        if passive:
+            if new_leader in connected_servers:
+                print(f"{YELLOW}[{ts()}] Client {client_id}: Sending request{req_num} to leader server {new_leader}{RESET}")
+                idx = connected_servers.index(new_leader)
+                try:
+                    connected_sockets[idx].sendall(message.encode())
+                    print(f"{BLUE}[{ts()}] Client {client_id}: Sent request{req_num} to server {new_leader}{RESET}")
+                except Exception as e:
+                    print(f"Failed to send message to server {new_leader}")
+        else:
+
+            for i in range(len(servers)):
+                curr_socket = connected_sockets[i]
+                try:
+                    curr_socket.sendall(message.encode())
+                    print(f"{BLUE}[{ts()}] Client {client_id}: Sending {message}{RESET}")
+                except Exception as e:
+                    print(f"Failed to send message to server {i+1}")
 
         # receive ACKs from three servers... ;-;
         while True:
