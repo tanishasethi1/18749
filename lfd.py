@@ -26,8 +26,6 @@ old_leader = 0
 current_leader = 0
 
 heartbeat_interval = 10
-# updated_leader = False
-
 
 gfd_connected = False
 gfd_sock = None
@@ -48,16 +46,10 @@ def handle_gfd():
             print(f"[{ts()}] LFD{id}: connected to GFD at {GFD_HOST}:{GFD_PORT}")
 
         except Exception as e:
-            pass
-            # print(f"{YELLOW}[{ts()}] LFD{id}: GFD not available yet ({e}); will retry...{RESET}")
-    # gfd, gfd_connected = connection(host=GFD_HOST, port=GFD_PORT)
+            print(f"{YELLOW}[{ts()}] LFD{id}: GFD not available yet ({e}); will retry...{RESET}")
 
     while True:
         if gfd_connected: #heartbeats for the gfd
-            # if first_connect:
-            #     first_connect = 0
-                # gfd_sock.sendall(f"LFD{id}: Connected \n".encode())
-            # else:
             try:
                 gfd_sock.sendall(f"LFD{id}: Heartbeat \n".encode())
                 gfd_sock.settimeout(TIMEOUT)
@@ -78,7 +70,6 @@ def handle_gfd():
             except socket.timeout:
                 print("Timeout exceeded, GFD failed")
             except socket.error as e:
-                # print(f"{RED}[{ts()}] Error sending heartbeat: {e}")
                 print(f"{RED}[{ts()}] LFD{id}: GFD died")
                 gfd_connected = False
                 gfd_sock.close()
@@ -187,9 +178,8 @@ def connection(host=HOST, port=PORT, timeout=TIMEOUT):
 
         print("port:", PORT+id)
         s.connect((HOST, PORT+id))
-        print("!!!!!!!!!!!!!!!!")
         s.settimeout(TIMEOUT) 
-        # print(f"Connected to server at", HOST)
+        
         connected = True
     except Exception as e:
         print(f"Cannot connect to the server {e}")

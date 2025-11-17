@@ -36,14 +36,13 @@ def handle_gfd(conn, addr):
                 break
 
             # data in format: "GFD: {membership} members - Server added = {new/disconnected serverID }."
-            print("data :", data)
+            print(data)
             new_member_id = data.split("=")[1].strip()
-            print("new_member_id :", new_member_id)
-
             if "Server added" in data:
                 if new_member_id not in members_list.keys():
                     members_list[new_member_id] = True
                     member_count += 1
+                    print(f"{BLUE} [{ts()}] RM: Server {new_member_id} added to membership list. Total members: {member_count}{RESET}")
                 if current_leader == 0:
                     current_leader = new_member_id
                     print(f"{GREEN}[{ts()}] RM: New leader is Server {current_leader}{RESET}") #send message to gfd?
@@ -53,6 +52,7 @@ def handle_gfd(conn, addr):
                 if new_member_id in members_list.keys():
                     members_list.pop(new_member_id)
                     member_count -= 1
+                    print(f"{BLUE} [{ts()}] RM: Server {new_member_id} removed from membership. Total members: {member_count}{RESET}")
                 if new_member_id == current_leader: #re-elect leader to first server in the list
                     if len(members_list) > 0:
                         current_leader = next(iter(members_list))
@@ -61,6 +61,7 @@ def handle_gfd(conn, addr):
                         conn.sendall(message.encode())
                     else:
                         current_leader = 0
+            print(f"{YELLOW}[{ts()}] RM: Current leader: {current_leader}{RESET}")
             print(members_list)
 
     except Exception as e:

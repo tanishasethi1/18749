@@ -140,7 +140,6 @@ def send_checkpoint():
     while primary == id:
         sleep(CHECKPOINT_FREQ)
         message = f"CHECKPOINT: state={my_state} checkpoint_count={checkpoint_count}"
-        print(backups)
         checkpoint_count+=1
         for backup_id in backups:
             (host, port, connected, sock) = backups[backup_id]
@@ -164,8 +163,6 @@ def main():
 
     args = parser.parse_args()
     global id, primary
-    # global checkpoint_count
-    # checkpoint_count= 0
     id = args.id
     global primary
 
