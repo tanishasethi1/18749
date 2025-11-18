@@ -63,6 +63,9 @@ def new_conn(conn, addr):
                 res = data.decode()
                 if "CHECKPOINT: state=" in res:
                     print(f"{CYAN}[{ts()}] Received message:{res} {RESET}")
+                    updated_state = int(res.split("state=")[1].split()[0])
+                    with state_lock:
+                        my_state = updated_state
                 else:
                     print("Received message: ", res)
 
