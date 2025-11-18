@@ -70,7 +70,10 @@ def new_conn(conn, addr):
 
                 #passive
                 if "CHECKPOINT: state=" in res:
-                    print(f"{CYAN}[{ts()}] Received message:{res} {RESET}")
+                    if not passive and "Leader" in res:
+                        pass
+                    else:
+                        print(f"{CYAN}[{ts()}] Received message:{res} {RESET}")
                     updated_state = int(res.split("state=")[1].split()[0])
                     with state_lock:
                         my_state = updated_state
@@ -269,7 +272,8 @@ def main():
         #ADDITION
         print(f"[{ts()}] Server listening on {HOST}:{PORT+id}")
 
-        print(f"Server {id} started. Initial primary is Server {primary} (primary == id? {primary==id})")
+        if passive:
+            print(f"Server {id} started. Initial primary is Server {primary} (primary == id? {primary==id})")
 
         ### if recivering, req checkpoint from primary
         if i_am_ready == 0 and not requested_checkpoint:

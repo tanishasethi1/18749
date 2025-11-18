@@ -67,7 +67,11 @@ def handle_gfd(conn, addr):
 
             if passive:
                 print(f"{YELLOW}[{ts()}] RM: Current leader: {current_leader}{RESET}")
-            print(members_list)
+            # print members list
+            ml = ""
+            for i in members_list.keys():
+                ml += str(i) + " "
+            print(f"{GREEN}[{ts()}] Members List: {ml}{RESET}")
 
     except Exception as e:
         print(f"Error handling RM {addr}: {e}")

@@ -98,11 +98,10 @@ def handle_server():
             try: 
                 # Send heartbeat first
                 s.sendall("Heartbeat".encode())
-                print(f"Sending heartbeat at {int(time.time())}")
+                # print(f"Sending heartbeat at {int(time.time())}")
                 print(f"{GREEN}[{ts()}] LFD{id}: sending heartbeat to S{id}{RESET}")
 
                 # Send "New Leader" message only if the connection is active
-                print(old_leader, current_leader)
                 if current_leader != old_leader and current_leader != 0:  # Only send the leader message if there is a valid leader
                     msg = f"GFD: New Leader: {current_leader}"
                     s.sendall(msg.encode())
@@ -176,7 +175,6 @@ def connection(host=HOST, port=PORT, timeout=TIMEOUT):
             # Fallback to SO_REUSEADDR for older systems or certain platforms
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
-        print("port:", PORT+id)
         s.connect((HOST, PORT+id))
         s.settimeout(TIMEOUT) 
         
