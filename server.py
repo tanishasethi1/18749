@@ -46,7 +46,7 @@ my_state = 0
 
 checkpoint_count = 0
 
-primary = 1 # set to primary's id
+primary = 0 # set to primary's id
 
 clients = {}
 
@@ -90,7 +90,7 @@ def new_conn(conn, addr):
                     if client_id not in clients:
                         clients[client_id] = conn
                         print(f"{BLUE}[{ts()}] Server {id}: New client connected: Client {client_id}{RESET}")
-                        conn.sendall(f"New Leader: {primary}\n".encode())
+                        # conn.sendall(f"New Leader: {primary}\n".encode())
                 
                 # LFD response handling
                 if "Heartbeat" in res:
@@ -208,11 +208,11 @@ def main():
         #ADDITION
         print(f"[{ts()}] Server listening on {HOST}:{PORT+id}")
 
-        print(f"Server {id} started. Primary is Server {primary} is {primary==id}")
-        if primary == id and args.passive:
-            print(f"{GREEN}[{ts()}] Server {id}: I am the Primary: STARTING THREADS{RESET}")
-            threading.Thread(target=connect_to_backups).start()
-            threading.Thread(target=send_checkpoint).start()
+        print(f"Server {id} started. Initial primary is Server {primary} (primary == id? {primary==id})")
+        # if primary == id and args.passive:
+        #     print(f"{GREEN}[{ts()}] Server {id}: I am the Primary: STARTING THREADS{RESET}")
+        #     threading.Thread(target=connect_to_backups).start()
+        #     threading.Thread(target=send_checkpoint).start()
 
         # accept connections in a loop
         while True:

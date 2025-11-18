@@ -64,6 +64,15 @@ def receive_data(sock, server_id):
                     print(f"{GREEN}[{ts()}] Client {client_id}: Updated leader to Server {leader_id}{RESET}")
     except Exception as e:
           print(f"Error receiving data: {e}")
+    finally:
+        try:
+            sock.close()
+        except OSError:
+            pass
+        if connected_sockets.get(server_id) is sock:
+            del connected_sockets[server_id]
+            print(f"[{ts()}] Client {client_id}: Removed dead connection for server {server_id}")
+
 
 def connect_to_servers():
     global servers, connected_sockets
