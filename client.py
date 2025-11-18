@@ -11,6 +11,7 @@ CYAN = "\033[96m"    # duplicate detection (for later)
 RESET = "\033[0m"
 GREEN = "\033[92m"  
 YELLOW = "\033[93m"
+MAGENTA = "\033[95m"   
 
 def ts():
     return datetime.now().strftime("%H:%M:%S")
@@ -47,21 +48,28 @@ def receive_data(sock, server_id):
             if not data:
                 break
             else:
-                res = data.decode()
-                print("Received message:", res)
+                res = data.decode().strip()
+                # print("Received message:", res)
                 # print(f"{BLUE}[{ts()}] Client {client_id}: Send ACK for received message{RESET}")
                 if "Response to request" in res:
                     req_num = res.split("request")[1].split()[0]
                     server_id = res.split("Server")[1].split()[0]
+                    val       = res.strip().split(":")[-1].strip()
                     acks_received[server_id] = res
+
+                    print(f"{MAGENTA}[{ts()}] Recieved <S{server_id},C{client_id},{req_num},Hello!>{RESET}")
+
                     if (len(acks_received) > 1):
-                        print(f"Request {req_num}: Discarded duplicate message from server {server_id}")
-                    else:
-                        messages.append(res)
+                        print(f"{CYAN}[Request {req_num}] Discarded duplicate message from server {server_id}{RESET}")
+
+                    continue
+                    # else:
+                    #     val = res.strip().split(":")[-1].strip()
+                    #     messages.append(res)
                 if "New Leader: " in res:
                     new_leader = res.split("New Leader: ")[1].strip()
                     leader_id = int(new_leader)
-                    print(f"{GREEN}[{ts()}] Client {client_id}: Updated leader to Server {leader_id}{RESET}")
+                    print(f"{YELLOW}[{ts()}] Client {client_id}: Updated leader → Server {leader_id}{RESET}")
     except Exception as e:
           print(f"Error receiving data: {e}")
     finally:
@@ -119,7 +127,8 @@ def send_requests(passive):
             try:
                 if curr_socket:
                     curr_socket.sendall(message.encode())
-                    print(f"{BLUE}[{ts()}] Client {client_id}: Sending {message} to leader {leader_id}{RESET}")
+                    # print(f"{BLUE}[{ts()}] Client {client_id}: Sending {message} to leader {leader_id}{RESET}")
+                    print(f"{BLUE}[{ts()}] SENT <C{client_id},S{leader_id},Req.No:{req_num},Hello!>{RESET}")
             except Exception as e:
                 print(f"Failed to send message to server {leader_id}")
                 curr_socket.close()
@@ -130,7 +139,8 @@ def send_requests(passive):
                 if curr_socket:
                     try:
                         curr_socket.sendall(message.encode())
-                        print(f"{BLUE}[{ts()}] Client {client_id} to server {curr_server}: Sending {message} {RESET}")
+                        # print(f"{BLUE}[{ts()}] Client {client_id} to server {curr_server}: Sending {message} {RESET}")
+                        print(f"{BLUE}[{ts()}] Sent <C{client_id},S{curr_server},{req_num},Hello!>{RESET}")
                     except Exception as e:
                         print(f"Failed to send message to server {curr_server}")
                         curr_socket.close()
