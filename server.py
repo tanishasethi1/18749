@@ -48,6 +48,8 @@ checkpoint_count = 0
 
 primary = 1 # set to primary's id
 
+clients = {}
+
 def new_conn(conn, addr):
     global my_state, primary
     res = ""
@@ -67,15 +69,28 @@ def new_conn(conn, addr):
                 #Update new leader
                 if "New Leader" in res:
                     new_leader = res.split("New Leader: ")[1].strip().split('\n')[0]
+                    new_leader = int(new_leader)
                     if new_leader != primary:
-                        primary = int(new_leader)
+                        primary = new_leader
                         print(f"{GREEN}[{ts()}] Server {id}: New Leader is server {primary} {primary == id}{RESET}")
                         if int(primary) == int(id):
                             print(f"{GREEN}[{ts()}] Server {id}: I am the new Primary{RESET}")
                             threading.Thread(target=connect_to_backups).start()
                             threading.Thread(target=send_checkpoint).start()
-                        
+
+                            #Notify clients
+                            for client_id, client_conn in clients.items():
+                                message = f"New Leader: {primary}\n"
+                                client_conn.sendall(message.encode())
+                                print(f"{BLUE}[{ts()}] Server {id}: Notified Client {client_id} of new leader {primary}{RESET}")
                         continue
+
+                elif "Client" in res:
+                    client_id = res.split("Client")[1].split(":")[0]
+                    if client_id not in clients:
+                        clients[client_id] = conn
+                        print(f"{BLUE}[{ts()}] Server {id}: New client connected: Client {client_id}{RESET}")
+                        conn.sendall(f"New Leader: {primary}\n".encode())
                 
                 # LFD response handling
                 if "Heartbeat" in res:
@@ -148,7 +163,7 @@ def send_checkpoint():
 
             try:
                 sock.sendall(message.encode())
-                print(f"{CYAN}[{ts()}] Server {id} sending checkpoint to server {host}{RESET}")
+                print(f"{CYAN}[{ts()}] Server {id} sending checkpoint to server {backup_id}{RESET}")
             except Exception as e:
                 print("Failed to send checkpoint to server")
 
