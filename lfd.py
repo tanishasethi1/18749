@@ -53,7 +53,7 @@ def handle_gfd():
             try:
                 gfd_sock.sendall(f"LFD{id}: Heartbeat \n".encode())
                 gfd_sock.settimeout(TIMEOUT)
-                print(f"Sending heartbeat at {int(time.time())}")
+                # print(f"Sending heartbeat at {int(time.time())}")
                 try:
                     resp = gfd_sock.recv(1024).decode()
                     if "ACK" in resp:

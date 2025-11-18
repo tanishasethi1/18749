@@ -78,7 +78,10 @@ def new_conn(conn, addr):
                     with state_lock:
                         my_state = updated_state
                 else:
-                    print("Received message: ", res)
+                    if not passive and "Leader" in res:
+                        pass
+                    else:
+                        print("Received message: ", res)
 
                 #active
                 if res.startswith("CHECKPOINT "):
@@ -97,7 +100,10 @@ def new_conn(conn, addr):
                     print(f"[{ts()}] Server {id}: Sent recovery checkpoint to S{requester}")
                     continue
 
-                print("Received message:", res)
+                if not passive and "Leader" in res:
+                    pass
+                else:
+                    print("Received message:", res)
 
                 #Update new leader
                 if "New Leader" in res:
