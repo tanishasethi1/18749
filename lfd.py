@@ -60,7 +60,7 @@ def handle_gfd():
                         print(f"{BLUE}[{ts()}] LFD{id}: ACK received from GFD{RESET}")
                     if "New Leader" in resp:
                         current_leader = resp.split("New Leader: ")[1].strip()
-                        print(f"{CYAN}[{ts()}] LFD{id}: New Leader: {current_leader}{RESET}")
+                        # print(f"{CYAN}[{ts()}] LFD{id}: Leader: {current_leader}{RESET}")
                         
                 except socket.timeout:
                     print(f"{RED}[{ts()}] LFD{id}: No ACK (timeout={TIMEOUT}s) GFD may have failed{RESET}")

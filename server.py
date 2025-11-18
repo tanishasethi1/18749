@@ -47,7 +47,7 @@ my_state = 0
 i_am_ready = 1              
 high_watermark = {}         
 requested_checkpoint = False
-
+passive = False
 
 checkpoint_count = 0
 
@@ -102,9 +102,11 @@ def new_conn(conn, addr):
                     new_leader = int(new_leader)
                     if new_leader != primary:
                         primary = new_leader
-                        print(f"{GREEN}[{ts()}] Server {id}: New Leader is server {primary} {primary == id}{RESET}")
+                        if passive:
+                            print(f"{GREEN}[{ts()}] Server {id}: New Leader is server {primary} {primary == id}{RESET}")
                         if int(primary) == int(id):
-                            print(f"{GREEN}[{ts()}] Server {id}: I am the new Primary{RESET}")
+                            if passive:
+                                print(f"{GREEN}[{ts()}] Server {id}: I am the new Primary{RESET}")
                             threading.Thread(target=connect_to_backups).start()
                             threading.Thread(target=send_checkpoint).start()
 
@@ -112,7 +114,8 @@ def new_conn(conn, addr):
                             for client_id, client_conn in clients.items():
                                 message = f"New Leader: {primary}\n"
                                 client_conn.sendall(message.encode())
-                                print(f"{BLUE}[{ts()}] Server {id}: Notified Client {client_id} of new leader {primary}{RESET}")
+                                if passive:
+                                    print(f"{BLUE}[{ts()}] Server {id}: Notified Client {client_id} of new leader {primary}{RESET}")
                         continue
 
                 elif "Client" in res:
@@ -168,7 +171,7 @@ def new_conn(conn, addr):
 # 
 
 def connect_to_backups():
-    global backups, primary, id
+    global backups, primary, id, passive
     
     while primary == id:
         for backup_id in backups:
@@ -194,7 +197,11 @@ def send_checkpoint():
     global my_state
     global backups
     global id
-    print(f"{CYAN}[{ts()}] Server {id} starting checkpointing to backups...{RESET}")
+    global passive
+    if passive:
+        print(f"{CYAN}[{ts()}] Server {id} starting checkpointing to backups...{RESET}")
+    else:
+        print(f"{CYAN}[{ts()}] Servers starting checkpointing to replicas...{RESET}")
 
     while primary == id:
         sleep(CHECKPOINT_FREQ)
@@ -223,10 +230,11 @@ def main():
     # parser.add_argument("-p", "--port", type=int, default=1)
 
     args = parser.parse_args()
-    global id, primary
+    global id, primary, passive
     global i_am_ready, requested_checkpoint
     id = args.id
     primary = args.primary 
+    passive = args.passive
 
     #flag
     if args.recover:
@@ -265,16 +273,22 @@ def main():
 
         ### if recivering, req checkpoint from primary
         if i_am_ready == 0 and not requested_checkpoint:
-            print("Recieving Primary Checkpoint")
+            if passive:
+                print("Recieving Primary Checkpoint")
+            else:
+                print("Recieving Checkpoint")
+
             def _req_cp():
                 sleep(2)
                 try:
                     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     sock.connect((HOST, PORT + primary))
                     sock.sendall(f"REQUEST_CHECKPOINT {id}".encode())
-                    print(f"{CYAN}[{ts()}] Server {id}: Requested checkpoint from primary {primary}{RESET}")
-
-
+                    if passive:
+                        print(f"{CYAN}[{ts()}] Server {id}: Requested checkpoint from primary {primary}{RESET}")
+                    else:
+                        print(f"{CYAN}[{ts()}] Server {id}: Requested checkpoint from active replicas {RESET}")
+                    
                     # NEW: wait for checkpoint reply from primary
                     sock.settimeout(TIMEOUT)
                     reply = sock.recv(1024).decode()
