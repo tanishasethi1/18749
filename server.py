@@ -50,7 +50,7 @@ primary = 0 # set to primary's id
 
 clients = {}
 
-def new_conn(conn, addr):
+def new_conn(conn, addr, passive):
     global my_state, primary
     res = ""
     try:
@@ -70,7 +70,7 @@ def new_conn(conn, addr):
                     print("Received message: ", res)
 
                 #Update new leader
-                if "New Leader" in res:
+                if "New Leader" in res and passive:
                     new_leader = res.split("New Leader: ")[1].strip().split('\n')[0]
                     new_leader = int(new_leader)
                     if new_leader != primary:
@@ -183,6 +183,7 @@ def main():
     global id, primary
     id = args.id
     global primary
+    passive = args.passive
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
@@ -221,6 +222,6 @@ def main():
         while True:
             conn, addr = s.accept()
             print(f"Connected by {addr}")
-            threading.Thread(target=new_conn, args=(conn, addr)).start()
+            threading.Thread(target=new_conn, args=(conn, addr, passive)).start()
 
 main()

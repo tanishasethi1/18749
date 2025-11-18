@@ -84,7 +84,7 @@ def connect_to_servers():
 
         # connections to all 3 servers
         for i in range(len(servers)):
-            if (i+1) in connected_sockets:
+            if (i+1) in connected_sockets and connected_sockets[i+1] is not None:
                 continue
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             
@@ -126,14 +126,15 @@ def send_requests(passive):
                 del connected_sockets[leader_id]
         else:
             # sending to the three servers...
-            for curr_server, curr_socket  in connected_sockets.items():
-                try:
-                    curr_socket.sendall(message.encode())
-                    print(f"{BLUE}[{ts()}] Client {client_id}: Sending {message}{RESET}")
-                except Exception as e:
-                    print(f"Failed to send message to server {curr_server}")
-                    curr_socket.close()
-                    del connected_sockets[curr_server]
+            for curr_server, curr_socket in connected_sockets.items():
+                if curr_socket:
+                    try:
+                        curr_socket.sendall(message.encode())
+                        print(f"{BLUE}[{ts()}] Client {client_id} to server {curr_server}: Sending {message} {RESET}")
+                    except Exception as e:
+                        print(f"Failed to send message to server {curr_server}")
+                        curr_socket.close()
+                        connected_sockets[curr_server] = None
 
         # receive ACKs from three servers... ;-;
         while time.time() - start_time < 20: #20 second timeout for any request - stop waiting for ACKs
