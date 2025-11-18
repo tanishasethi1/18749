@@ -43,15 +43,21 @@ backups = {1: [SERVER1_HOST, SERVER1_PORT, False, None], 2: [SERVER2_HOST, SERVE
 
 state_lock = threading.Lock()
 my_state = 0
+#active replica
+i_am_ready = 1              
+high_watermark = {}         
+requested_checkpoint = False
+
 
 checkpoint_count = 0
 
-primary = 0 # set to primary's id
+primary = None # set to primary's id
 
 clients = {}
 
-def new_conn(conn, addr, passive):
+def new_conn(conn, addr):
     global my_state, primary
+    global i_am_ready, requested_checkpoint, high_watermark, checkpoint_count
     res = ""
     try:
         while True:
@@ -61,6 +67,8 @@ def new_conn(conn, addr, passive):
                 continue
             else:
                 res = data.decode()
+
+                #passive
                 if "CHECKPOINT: state=" in res:
                     print(f"{CYAN}[{ts()}] Received message:{res} {RESET}")
                     updated_state = int(res.split("state=")[1].split()[0])
@@ -69,8 +77,27 @@ def new_conn(conn, addr, passive):
                 else:
                     print("Received message: ", res)
 
+                #active
+                if res.startswith("CHECKPOINT "):
+                    cp_state = int(res.split()[1])
+                    print(f"[{ts()}] Server {id}: Installing recovery checkpoint state={cp_state}")
+                    with state_lock:
+                        my_state = cp_state
+                    i_am_ready = 1
+                    continue
+
+                # prim respon to checkpoint req
+                if res.startswith("REQUEST_CHECKPOINT"):
+                    requester = int(res.split()[1])
+                    cp_msg = f"CHECKPOINT {my_state}"
+                    conn.sendall(cp_msg.encode())
+                    print(f"[{ts()}] Server {id}: Sent recovery checkpoint to S{requester}")
+                    continue
+
+                print("Received message:", res)
+
                 #Update new leader
-                if "New Leader" in res and passive:
+                if "New Leader" in res:
                     new_leader = res.split("New Leader: ")[1].strip().split('\n')[0]
                     new_leader = int(new_leader)
                     if new_leader != primary:
@@ -102,10 +129,24 @@ def new_conn(conn, addr, passive):
                     print(f"{GREEN}[{ts()}] Server {id}: Heartbeat from LFD {id} {addr} acknowledged{RESET}")
                     continue
                 # Client response handling
-                elif "request" in res:
+                #active recover log request
+                if "request" in res:
+                    try:
+                        req_num_int = int(res.split("request")[1].split()[0])
+                        client_id = res.split("C")[1].split(":")[0]
+                        high_watermark[client_id] = req_num_int
+                    except:
+                        pass
+                    
+                    #if recovering do not reply
+                    if not i_am_ready:
+                        print(f"{YELLOW}[{ts()}] Server {id}: recovery mode — req {req_num_int}, not replying.{RESET}")
+                        continue
+                    
+                    #normal
                     req_num = res.split("request")[1].split()[0]
                     client_id = res.split("C")[1].split(":")[0]
-                    
+
                     # update client state
                     with state_lock:
                         current_state = my_state
@@ -176,14 +217,22 @@ def main():
     parser.add_argument("-i", "--id", type=int, default=1)
     parser.add_argument("-p", "--passive", action='store_true', help="Run server in passive mode")
     parser.add_argument("-ci", "--checkpoint-interval", type=int, default=5) #send checkpoints every 5 seconds
-    parser.add_argument("-primary", type=int, default=1) #default primary is 1
+    parser.add_argument("--primary", type=int, default=1) #default primary is 1
+    parser.add_argument("--recover", action="store_true")
+
     # parser.add_argument("-p", "--port", type=int, default=1)
 
     args = parser.parse_args()
     global id, primary
+    global i_am_ready, requested_checkpoint
     id = args.id
-    global primary
-    passive = args.passive
+    primary = args.primary 
+
+    #flag
+    if args.recover:
+        global i_am_ready
+        i_am_ready = 0
+        print(f"{CYAN}[{ts()}] Server {id}: Starting in RECOVERY MODE (i_am_ready=0){RESET}")
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 
@@ -213,6 +262,42 @@ def main():
         print(f"[{ts()}] Server listening on {HOST}:{PORT+id}")
 
         print(f"Server {id} started. Initial primary is Server {primary} (primary == id? {primary==id})")
+
+        ### if recivering, req checkpoint from primary
+        if i_am_ready == 0 and not requested_checkpoint:
+            print("Recieving Primary Checkpoint")
+            def _req_cp():
+                sleep(2)
+                try:
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    sock.connect((HOST, PORT + primary))
+                    sock.sendall(f"REQUEST_CHECKPOINT {id}".encode())
+                    print(f"{CYAN}[{ts()}] Server {id}: Requested checkpoint from primary {primary}{RESET}")
+
+
+                    # NEW: wait for checkpoint reply from primary
+                    sock.settimeout(TIMEOUT)
+                    reply = sock.recv(1024).decode()
+                    print(f"{CYAN}[{ts()}] Server {id}: Received checkpoint reply: {reply}{RESET}")
+
+                    if reply.startswith("CHECKPOINT "):
+                        cp_state = int(reply.split()[1])
+                        print(f"{GREEN}[{ts()}] Server {id}: getting recovery checkpoint state={cp_state}{RESET}")
+                        global my_state, i_am_ready
+                        with state_lock:
+                            my_state = cp_state
+                        i_am_ready = 1
+                    else:
+                        print(f"[{ts()}] Server {id}: recovery reply: {reply}")
+
+                    sock.close()
+
+                except Exception as e:
+                    print(f"[{ts()}] Server {id}: Failed checkpoint request: {e}")
+            threading.Thread(target=_req_cp).start()
+            requested_checkpoint = True
+
+
         # if primary == id and args.passive:
         #     print(f"{GREEN}[{ts()}] Server {id}: I am the Primary: STARTING THREADS{RESET}")
         #     threading.Thread(target=connect_to_backups).start()
@@ -222,6 +307,6 @@ def main():
         while True:
             conn, addr = s.accept()
             print(f"Connected by {addr}")
-            threading.Thread(target=new_conn, args=(conn, addr, passive)).start()
+            threading.Thread(target=new_conn, args=(conn, addr)).start()
 
 main()
