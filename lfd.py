@@ -15,11 +15,11 @@ CYAN = "\033[96m"
 def ts():
     return datetime.now().strftime("%H:%M:%S")
 
-HOST = "127.0.0.1" #change to server ip
+HOST = "172.26.66.140" #"127.0.0.1" #change to server ip
 PORT = 65080
 TIMEOUT = 10
 
-GFD_HOST = "127.0.0.1" #change to server ip
+GFD_HOST = "172.26.108.109" #"127.0.0.1" #change to server ip
 GFD_PORT = 65084    
 
 old_leader = 0

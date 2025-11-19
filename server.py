@@ -21,18 +21,18 @@ CYAN = "\033[96m"
 def ts():
     return datetime.now().strftime("%H:%M:%S")
 
-HOST = "127.0.0.1"
+HOST = "172.26.66.140" #"127.0.0.1"
 PORT = 65080
 
-SERVER1_HOST = "127.0.0.1"
+SERVER1_HOST = "172.26.3.40" #127.0.0.1"
 SERVER1_PORT = 65081
 SERVER1_ID = 1
 
-SERVER2_HOST = "127.0.0.1"
+SERVER2_HOST = "172.26.70.125" #"127.0.0.1"
 SERVER2_PORT = 65082
 SERVER2_ID = 2
 
-SERVER3_HOST = "127.0.0.1"
+SERVER3_HOST = "172.26.66.140" #"127.0.0.1"
 SERVER3_PORT = 65083
 SERVER3_ID = 3
 
@@ -292,7 +292,9 @@ def main():
                 sleep(2)
                 try:
                     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    sock.connect((HOST, PORT + primary))
+                    primary_host = backups.get(primary)[0]
+                    primary_port = backups.get(primary)[1]  
+                    sock.connect((primary_host, primary_port))
                     sock.sendall(f"REQUEST_CHECKPOINT {id}".encode())
                     if passive:
                         print(f"{CYAN}[{ts()}] Server {id}: Requested checkpoint from primary {primary}{RESET}")
