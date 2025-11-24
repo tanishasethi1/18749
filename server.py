@@ -21,18 +21,18 @@ CYAN = "\033[96m"
 def ts():
     return datetime.now().strftime("%H:%M:%S")
 
-HOST = "172.26.66.140" #"127.0.0.1"
+HOST = "127.0.0.1"
 PORT = 65080
 
-SERVER1_HOST = "172.26.3.40" #127.0.0.1"
+SERVER1_HOST = "127.0.0.1"
 SERVER1_PORT = 65081
 SERVER1_ID = 1
 
-SERVER2_HOST = "172.26.70.125" #"127.0.0.1"
+SERVER2_HOST = "127.0.0.1"
 SERVER2_PORT = 65082
 SERVER2_ID = 2
 
-SERVER3_HOST = "172.26.66.140" #"127.0.0.1"
+SERVER3_HOST = "127.0.0.1"
 SERVER3_PORT = 65083
 SERVER3_ID = 3
 
@@ -97,7 +97,7 @@ def new_conn(conn, addr):
                     requester = int(res.split()[1])
                     cp_msg = f"CHECKPOINT {my_state}"
                     conn.sendall(cp_msg.encode())
-                    print(f"[{ts()}] Server {id}: Sent recovery checkpoint to S{requester}")
+                    print(f"{CYAN}[{ts()}] Server {id}: Sent recovery checkpoint to S{requester}")
                     continue
 
                 if not passive and "Leader" in res:
@@ -112,7 +112,7 @@ def new_conn(conn, addr):
                     if new_leader != primary:
                         primary = new_leader
                         if passive:
-                            print(f"{GREEN}[{ts()}] Server {id}: New Leader is server {primary} {primary == id}{RESET}")
+                            print(f"{GREEN}[{ts()}] Server {id}: New Leader is server {primary}{RESET}")
                         if int(primary) == int(id):
                             if passive:
                                 print(f"{GREEN}[{ts()}] Server {id}: I am the new Primary{RESET}")
@@ -132,7 +132,7 @@ def new_conn(conn, addr):
                     if client_id not in clients:
                         clients[client_id] = conn
                         print(f"{BLUE}[{ts()}] Server {id}: New client connected: Client {client_id}{RESET}")
-                        # conn.sendall(f"New Leader: {primary}\n".encode())
+                        conn.sendall(f"New Leader: {primary}\n".encode())
                 
                 # LFD response handling
                 if "Heartbeat" in res:
@@ -223,7 +223,7 @@ def send_checkpoint():
 
             try:
                 sock.sendall(message.encode())
-                print(f"{CYAN}[{ts()}] Server {id} sending checkpoint to server {backup_id}{RESET}")
+                print(f"[{ts()}] Server {id} sending checkpoint to server {backup_id}{RESET}")
             except Exception as e:
                 print("Failed to send checkpoint to server")
 
@@ -279,7 +279,7 @@ def main():
         print(f"[{ts()}] Server listening on {HOST}:{PORT+id}")
 
         if passive:
-            print(f"Server {id} started. Initial primary is Server {primary} (primary == id? {primary==id})")
+            print(f"Server {id} started. Initial primary is Server {primary}")
 
         ### if recivering, req checkpoint from primary
         if i_am_ready == 0 and not requested_checkpoint:
