@@ -1,3 +1,4 @@
+import platform
 import socket
 import threading
 import time
@@ -31,6 +32,9 @@ current_leader = 0
 
 def relaunch_server(server_id, passive):
     print(f"{YELLOW}[{ts()}] RM: Relaunching Server {server_id}{RESET}")
+
+    os_name = platform.system()
+    print(f"Operating System: {os_name}")
     current_directory = os.getcwd()
 
     if passive:
@@ -38,10 +42,18 @@ def relaunch_server(server_id, passive):
     else:
         cmd = f"python3 {current_directory}/server.py -i {server_id} --recover --primary {current_leader}"
     
-    subprocess.Popen([
-        "osascript", "-e",
-        f'tell application "Terminal" to do script "{cmd}"'
-    ])
+    if os_name == "Windows":
+        # cmd = f"wt -d "C:\{current_directory}" powershell.exe -NoExit -Command "echo 'Hello from new terminal!'""
+        subprocess.Popen(["cmd", "/k", cmd])
+    elif os_name == "Darwin": # macOS
+        # print("This is a macOS system.")
+        subprocess.Popen([
+            "osascript", "-e",
+            f'tell application "Terminal" to do script "{cmd}"'
+        ])
+    else:
+        print("Unknown operating system.")
+    
         
     print(f"{GREEN}[{ts()}] RM: Server {server_id} relaunched successfully.{RESET}")
 
