@@ -105,8 +105,8 @@ def handle_lfd(conn, addr):
                     member_count += 1
                     membership[lfd_id] = 1
                     print_membership()
-                    print(membership)
-                    print("printed membership \n")
+                    # print(membership)
+                    # print("printed membership \n")
                     # Update changes to RM
                     message = f"GFD: {len(membership)} members - Server added = {lfd_id}"
                     print(rm_connected, rm_sock)

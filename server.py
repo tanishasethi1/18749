@@ -262,7 +262,9 @@ def main():
 
 
         # bind socket to host and port
-        s.bind((HOST, PORT+id))
+        HOST = backups.get(id)[0]
+        server_port = backups.get(id)[1]
+        s.bind((HOST, server_port))
         # listen for connections
         s.listen()
 
@@ -284,9 +286,9 @@ def main():
         ### if recivering, req checkpoint from primary
         if i_am_ready == 0 and not requested_checkpoint:
             if passive:
-                print("Recieving Primary Checkpoint")
+                print("Receiving Primary Checkpoint")
             else:
-                print("Recieving Checkpoint")
+                print("Receiving Checkpoint")
 
             def _req_cp():
                 sleep(2)
