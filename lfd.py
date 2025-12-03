@@ -2,6 +2,9 @@ import socket
 import time
 import argparse
 import threading
+import os
+import subprocess
+import platform
 
 from datetime import datetime
 GREEN = "\033[92m"   # successful heartbeat
@@ -30,6 +33,31 @@ heartbeat_interval = 10
 gfd_connected = False
 gfd_sock = None
 connected = False
+
+def relaunch_server(server_id, passive):
+    print(f"{YELLOW}[{ts()}] RM: Relaunching Server {server_id}{RESET}")
+
+    os_name = platform.system()
+    print(f"Operating System: {os_name}")
+    current_directory = os.getcwd()
+
+    if passive:
+        cmd = f"python3 {current_directory}/server.py -i {server_id} -p"
+    else:
+        cmd = f"python3 {current_directory}/server.py -i {server_id} --recover --primary {current_leader}"
+    
+    if os_name == "Windows":
+        subprocess.Popen(["cmd", "/k", cmd])
+    elif os_name == "Darwin": # macOS
+        subprocess.Popen([
+            "osascript", "-e",
+            f'tell application "Terminal" to do script "{cmd}"'
+        ])
+    else:
+        print("Unknown operating system.")
+    
+        
+    print(f"{GREEN}[{ts()}] RM: Server {server_id} relaunched successfully.{RESET}")
 
 def handle_gfd():
     # connecting to gfd
@@ -82,6 +110,8 @@ def handle_server():
     global gfd_sock
     global current_leader
     global old_leader
+    global passive
+    global id
 
     while not connected:
         try:
@@ -128,8 +158,7 @@ def handle_server():
                 connected = False
                 s.close()
                 gfd_sock.sendall(f"LFD{id}: Server Disconnected".encode())
-
-
+                threading.Thread(target=relaunch_server, args=(id, passive)).start()
         else:
             try:
                 print(f"Trying to reconnect")
@@ -148,6 +177,7 @@ def main():
     data = ""
     parser = argparse.ArgumentParser(description="Heartbeat")
     parser.add_argument("-f", "--freq", type=int, default=5)
+    parser.add_argument("-p", "--passive", action='store_true', help="Run LFD in passive mode")
     parser.add_argument("-t", "--timeout", type=int, default=5)
     parser.add_argument("-i", "--id", type=int, default=1)
     parser.add_argument("--gfd_host", type=str, default=GFD_HOST)
@@ -156,8 +186,9 @@ def main():
     args = parser.parse_args()
     global heartbeat_interval
     heartbeat_interval = args.freq
-    global id, current_leader
+    global id, current_leader, passive
     id = args.id
+    passive = args.passive
     TIMEOUT = args.timeout
 
     threading.Thread(target=handle_gfd).start()

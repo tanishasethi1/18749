@@ -30,32 +30,32 @@ members_list = {}
 current_leader = 0
 
 
-def relaunch_server(server_id, passive):
-    print(f"{YELLOW}[{ts()}] RM: Relaunching Server {server_id}{RESET}")
+# def relaunch_server(server_id, passive):
+#     print(f"{YELLOW}[{ts()}] RM: Relaunching Server {server_id}{RESET}")
 
-    os_name = platform.system()
-    print(f"Operating System: {os_name}")
-    current_directory = os.getcwd()
+#     os_name = platform.system()
+#     print(f"Operating System: {os_name}")
+#     current_directory = os.getcwd()
 
-    if passive:
-        cmd = f"python3 {current_directory}/server.py -i {server_id} -p"
-    else:
-        cmd = f"python3 {current_directory}/server.py -i {server_id} --recover --primary {current_leader}"
+#     if passive:
+#         cmd = f"python3 {current_directory}/server.py -i {server_id} -p"
+#     else:
+#         cmd = f"python3 {current_directory}/server.py -i {server_id} --recover --primary {current_leader}"
     
-    if os_name == "Windows":
-        # cmd = f"wt -d "C:\{current_directory}" powershell.exe -NoExit -Command "echo 'Hello from new terminal!'""
-        subprocess.Popen(["cmd", "/k", cmd])
-    elif os_name == "Darwin": # macOS
-        # print("This is a macOS system.")
-        subprocess.Popen([
-            "osascript", "-e",
-            f'tell application "Terminal" to do script "{cmd}"'
-        ])
-    else:
-        print("Unknown operating system.")
+#     if os_name == "Windows":
+#         # cmd = f"wt -d "C:\{current_directory}" powershell.exe -NoExit -Command "echo 'Hello from new terminal!'""
+#         subprocess.Popen(["cmd", "/k", cmd])
+#     elif os_name == "Darwin": # macOS
+#         # print("This is a macOS system.")
+#         subprocess.Popen([
+#             "osascript", "-e",
+#             f'tell application "Terminal" to do script "{cmd}"'
+#         ])
+#     else:
+#         print("Unknown operating system.")
     
         
-    print(f"{GREEN}[{ts()}] RM: Server {server_id} relaunched successfully.{RESET}")
+#     print(f"{GREEN}[{ts()}] RM: Server {server_id} relaunched successfully.{RESET}")
 
 # talk to GFD
 def handle_gfd(conn, addr):
@@ -86,7 +86,7 @@ def handle_gfd(conn, addr):
                     members_list.pop(new_member_id)
                     member_count -= 1
                     print(f"{BLUE} [{ts()}] RM: Server {new_member_id} removed from membership. Total members: {member_count}{RESET}")
-                    threading.Thread(target=relaunch_server, args=(new_member_id, passive)).start()
+                    # threading.Thread(target=relaunch_server, args=(new_member_id, passive)).start()
                 if new_member_id == current_leader: #re-elect leader to first server in the list
                     if len(members_list) > 0:
                         current_leader = next(iter(members_list))
